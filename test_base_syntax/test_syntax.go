@@ -2,8 +2,15 @@ package main
 
 /*
 1. 测试基本语法，比如for, range, 数组,等的用法
+2. 测试管道,利用读取signal使main阻塞
+3. 为何单独的select却不行，会报错 fatal error: all goroutines are asleep - deadlock!
 */
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+)
 
 func print(ch chan int) {
 	fmt.Println("Hello world")
@@ -101,9 +108,14 @@ func test_other() {
 func main() {
 	fmt.Println("test begin!!")
 	//基本语法的测试  ok
-	//test_other()
+	test_other()
 	//管道用法 ok
-	//test_chan()
+	test_chan()
 	fmt.Println("test over!!")
-	select {}
+	//select {} //为何不能使用该句?
+	//使用下面的函数阻塞main函数
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	fmt.Println("signal", <-sigChan)
+
 }
