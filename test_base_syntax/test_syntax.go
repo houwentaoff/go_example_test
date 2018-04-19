@@ -17,6 +17,18 @@ func print(ch chan int) {
 	ch <- 1
 }
 
+/*
+1. 空的interface相当于C语言里面的void
+2. 常用来作为函数参数 如:json.Marshal()
+*/
+func test_interface() {
+	var a int
+	a = 123
+	var v interface{}
+	v = a
+	fmt.Println("interface :", v)
+}
+
 //管道的写入和读取都是阻塞的
 func test_chan() {
 
@@ -111,6 +123,7 @@ func main() {
 	test_other()
 	//管道用法 ok
 	test_chan()
+	test_interface()
 	fmt.Println("test over!!")
 	//select {} //为何不能使用该句?
 	//使用下面的函数阻塞main函数
