@@ -1,5 +1,12 @@
 package main
 
+/*cgdb :
+
+1. 编译: go build -gcflags "-N -l"  test_syntax.go:关闭优化
+2. l main.go:8  l main.main查看源码
+3. 断点 b main.main     b test_syntax.go:94
+
+*/
 /*
 1. 测试基本语法，比如for, range, 数组,等的用法
 2. 测试管道,利用读取signal使main阻塞
@@ -9,12 +16,90 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
+	"sync"
 	"syscall"
+	"time"
 )
 
+type Int int
+
+//和c#一样的ToString函数
+func (i *Int) ToString() string {
+	return strconv.Itoa(int(*i))
+}
 func print(ch chan int) {
 	fmt.Println("Hello world")
 	ch <- 1
+}
+
+func test_select() {
+	in := make(chan string)
+	quit := make(chan string)
+
+	//stat := make(chan int)
+	var wg sync.WaitGroup
+
+	//子线程 接收阻塞任务 但主线程有绝对控制权,可以随时让子线程退出 需求来源于light中异步接收码值，
+	//主线程多次异步发送消息后会导致多个子线程接收数据混乱，所以每次开始发送时需要清除掉之前的子线
+	//程 除了使用条件变量外使用for+select+WaitGroup也是不错的选择
+	go func() {
+		defer func() {
+			//stat <- 1
+			fmt.Println("thread 1 exit")
+			//wg.Add(-1)
+			wg.Done()
+		}()
+		var str string
+		var q string
+		wg.Add(1)
+
+		for {
+			select {
+			//会阻塞
+			case str = <-in:
+				fmt.Println("recv thread 1:", str)
+			case q = <-quit:
+				//成功退出给主线程发信号
+				fmt.Println("quit thread 1:", q)
+				return
+			}
+		}
+	}()
+
+	/*
+		go func(in chan string, quit chan string) {
+			defer func() {
+				fmt.Println("thread 2 exit")
+				wg.Done()
+				//stat <- 1
+			}()
+			wg.Add(1)
+			var str string
+			var q string
+			for {
+				select {
+				//会阻塞
+				case str = <-in:
+					fmt.Println("recv thread 2:", str)
+				case q = <-quit:
+					//成功退出给主线程发信号
+					fmt.Println("quit thread 2:", q)
+					return
+				}
+			}
+		}(in, quit)
+	*/
+	var i Int
+	for i = 0; i < 3; i++ {
+		time.Sleep(1 * time.Second)
+		in <- i.ToString()
+	}
+	quit <- "quit"
+	//<-stat
+	wg.Wait()
+	fmt.Println("father over")
+	//fmt.Println("father over")
 }
 
 /*
@@ -124,6 +209,7 @@ func main() {
 	//管道用法 ok
 	test_chan()
 	test_interface()
+	test_select()
 	fmt.Println("test over!!")
 	//select {} //为何不能使用该句?
 	//使用下面的函数阻塞main函数
