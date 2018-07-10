@@ -14,6 +14,7 @@ package main
 */
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
@@ -202,8 +203,26 @@ func test_other() {
 	}()
 
 }
+
+func test_udp() {
+	conn, err := net.Dial("udp", "192.168.20.175:7000")
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("udp err")
+		os.Exit(1)
+	}
+	for {
+		conn.Write([]byte("00000"))
+
+		time.Sleep(1 * time.Second)
+	}
+}
 func main() {
 	fmt.Println("test begin!!")
+
+	//测试udp
+	//test_udp()
+
 	//基本语法的测试  ok
 	test_other()
 	//管道用法 ok
