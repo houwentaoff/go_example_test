@@ -25,6 +25,9 @@ import (
 
 type Int int
 
+var sem chan string
+
+//sem := make(chan string)
 //和c#一样的ToString函数
 func (i *Int) ToString() string {
 	return strconv.Itoa(int(*i))
@@ -118,6 +121,7 @@ func test_interface() {
 //管道的写入和读取都是阻塞的
 func test_chan() {
 
+	//切片
 	chs := make([]chan int, 10) //Panic occurs if no initial length: missing len argument to make([]chan int)
 	// 一般的由变量控制的for循环
 	for i := 0; i < len(chs); i++ {
@@ -217,18 +221,71 @@ func test_udp() {
 		time.Sleep(1 * time.Second)
 	}
 }
+func test_tcp() {
+	conn, err := net.Dial("tcp", "127.0.0.1:8080")
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("tcp err")
+		os.Exit(1)
+	}
+	for {
+		conn.Write([]byte("12345"))
+		time.Sleep(1 * time.Second)
+	}
+}
+func test_tcp_ser() {
+
+	ln, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		// handle error
+	}
+	sem <- "tcp ser ok"
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			// handle error
+		}
+		go handleConnection(conn)
+	}
+
+}
+func handleConnection(conn net.Conn) {
+	defer conn.Close()
+	var buf [512]byte
+	//创建切片
+	//buf := make([]byte, 512)
+	for {
+		//切片
+		//切片的类型是 []T，T 是切片元素的类型。和数组不同的是，切片没有固定的长度
+		//切片也可以基于现有的切片或数组生成。切分的范围由两个由冒号分割的索引对应的半开区间指定。
+		//表达式 b[1:4]创建的切片引用数组 b 的第 1 到 3 个元素空间
+		//切片的开始和结束的索引都是可选的；它们分别默认为零和数组的长度。
+		n, err := conn.Read(buf[:]) // ==> buf[0:]
+		if err != nil {
+			return
+		}
+		rAddr := conn.RemoteAddr()
+		fmt.Println("Receive from client", rAddr.String(), string(buf[0:n]))
+	}
+}
 func main() {
 	fmt.Println("test begin!!")
+	// init package var
+	sem = make(chan string)
 
 	//测试udp
 	//test_udp()
-
-	//基本语法的测试  ok
-	test_other()
-	//管道用法 ok
-	test_chan()
-	test_interface()
-	test_select()
+	go test_tcp_ser()
+	fmt.Println(<-sem)
+	go test_tcp()
+	/*
+		//基本语法的测试  ok
+		test_other()
+		//管道用法 ok
+		test_chan()
+		test_interface()
+		test_select()
+	*/
 	fmt.Println("test over!!")
 	//select {} //为何不能使用该句?
 	//使用下面的函数阻塞main函数
