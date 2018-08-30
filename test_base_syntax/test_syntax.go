@@ -221,6 +221,31 @@ func test_udp() {
 		time.Sleep(1 * time.Second)
 	}
 }
+func test_udp_ser() {
+	data := make([]byte, 1024)
+
+	addr, err := net.ResolveUDPAddr("udp", "127.0.0.1:8088")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer listener.Close()
+	listener, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		fmt.Printf("error during read: %s", err)
+		return
+	}
+	for {
+		n, remoteAddr, err := listener.ReadFrom(data)
+		if err != nil {
+			fmt.Printf("error during read: %s", err)
+		}
+		go func() {
+			fmt.Printf("<%s> %s\n", remoteAddr, data[:n])
+
+		}()
+	}
+}
 func test_tcp() {
 	conn, err := net.Dial("tcp", "127.0.0.1:8080")
 	defer conn.Close()
