@@ -136,6 +136,15 @@ func test_chan() {
 	}
 }
 func test_other() {
+	var x,y,z int = 0,0,0//多变量这样赋值
+	//或者这样
+	var l, m, n int 
+	l, m, n = 1, 2, 3
+	//或者这样
+	i, j, k := 0, 0, 0 
+	fmt.Println("x:", x, "y:", y, "z:", z)
+	fmt.Println("i:", i, "j:", j, "k:", k)
+	fmt.Println("l:", l, "m:", m, "n:", n)
 	//数组元素为string
 	str := []string{"welcome", "for", "Chengdu!"}
 	//迭代str数组中的各个元素
